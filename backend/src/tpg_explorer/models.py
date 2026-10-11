@@ -23,3 +23,46 @@ class HealthResponse(BaseModel):
     database_connected: bool = True
     target_url: str = ""
     features: dict[str, Any] = Field(default_factory=dict)
+
+
+class SchemaPattern(BaseModel):
+    from_label: str
+    type: str
+    to_label: str
+
+
+class SchemaResponse(BaseModel):
+    labels: list[str] = Field(default_factory=list)
+    relationship_types: list[str] = Field(default_factory=list)
+    property_keys: dict[str, str] = Field(default_factory=dict)
+    patterns: list[SchemaPattern] = Field(default_factory=list)
+
+
+class RelationsSummary(BaseModel):
+    incoming: dict[str, int] = Field(default_factory=dict)
+    outgoing: dict[str, int] = Field(default_factory=dict)
+
+
+class NodeDetailResponse(BaseModel):
+    id: str
+    labels: list[str] = Field(default_factory=list)
+    properties: dict[str, Any] = Field(default_factory=dict)
+    relations_summary: RelationsSummary = Field(default_factory=RelationsSummary)
+
+
+class RelatedNodeSummary(BaseModel):
+    id: str
+    labels: list[str] = Field(default_factory=list)
+    summary_properties: dict[str, Any] = Field(default_factory=dict)
+
+
+class RelatedItem(BaseModel):
+    relation_properties: dict[str, Any] = Field(default_factory=dict)
+    node: RelatedNodeSummary
+
+
+class RelatedNodesResponse(BaseModel):
+    relation_type: str
+    direction: Literal["incoming", "outgoing"]
+    items: list[RelatedItem] = Field(default_factory=list)
+    total: int = 0
