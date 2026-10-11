@@ -1,15 +1,18 @@
 import React, { useState, useMemo } from 'react';
-import { Database, Table, Share2, Layers } from 'lucide-react';
+import { Database, Table, Share2, Layers, Compass } from 'lucide-react';
 import { QueryEditor } from './components/QueryEditor';
 import { ResultsTable } from './components/ResultsTable';
 import { CytoscapeGraph } from './components/CytoscapeGraph';
+import { ObjectDetailView } from './components/ObjectDetailView';
+import { SearchBar } from './components/SearchBar';
 import { extractGraphElements } from './utils/graphParser';
 import { apiClient } from './apiClient';
 import type { QueryRequest, QueryResponse } from './types';
 import './App.css';
 
 export const App: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'query' | 'graph' | 'schema'>('query');
+  const [activeTab, setActiveTab] = useState<'query' | 'graph' | 'schema' | 'object'>('query');
+  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [queryResponse, setQueryResponse] = useState<QueryResponse | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -39,9 +42,13 @@ export const App: React.FC = () => {
     }
   };
 
-  const handleNodeClick = (nodeId: string) => {
-    console.log('Node clicked:', nodeId);
-    // Future PRs will route to Object Detail view
+  const handleInspectNode = (nodeId: string) => {
+    setSelectedNodeId(nodeId);
+    setActiveTab('object');
+  };
+
+  const handleSearchNode = (term: string) => {
+    handleInspectNode(term);
   };
 
   return (
@@ -51,6 +58,10 @@ export const App: React.FC = () => {
           <Database className="brand-icon" size={24} />
           <h1>TPG Explorer</h1>
           <span className="badge">Traverse</span>
+        </div>
+
+        <div className="header-search">
+          <SearchBar onSearch={handleSearchNode} />
         </div>
 
         <nav className="header-nav">
@@ -69,6 +80,14 @@ export const App: React.FC = () => {
           >
             <Share2 size={18} />
             <span>Graph View</span>
+          </button>
+          <button
+            className={`nav-tab ${activeTab === 'object' ? 'active' : ''}`}
+            onClick={() => setActiveTab('object')}
+            data-testid="tab-object"
+          >
+            <Compass size={18} />
+            <span>Object Detail</span>
           </button>
           <button
             className={`nav-tab ${activeTab === 'schema' ? 'active' : ''}`}
@@ -95,7 +114,7 @@ export const App: React.FC = () => {
               <ResultsTable
                 response={queryResponse}
                 error={error}
-                onNodeClick={handleNodeClick}
+                onNodeClick={handleInspectNode}
               />
             </section>
           </div>
@@ -112,8 +131,26 @@ export const App: React.FC = () => {
             ) : (
               <CytoscapeGraph
                 elements={graphElements}
-                onSelectNode={handleNodeClick}
+                onSelectNode={handleInspectNode}
               />
+            )}
+          </div>
+        )}
+
+        {activeTab === 'object' && (
+          <div className="object-tab-layout">
+            {selectedNodeId ? (
+              <ObjectDetailView
+                nodeId={selectedNodeId}
+                onNavigateNode={handleInspectNode}
+                onClose={() => setActiveTab('query')}
+              />
+            ) : (
+              <div className="placeholder-view" data-testid="object-empty-state">
+                <Compass size={48} className="placeholder-icon" />
+                <h3>No Node Selected</h3>
+                <p>Use the search bar above or click on any node in the Query Runner / Graph view to view its properties and relationships.</p>
+              </div>
             )}
           </div>
         )}
