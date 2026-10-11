@@ -8,3 +8,4 @@ build/
 *.egg-info/
 .debug-screenshots/
 node_modules/
+*.tsbuildinfo
