@@ -1,0 +1,11 @@
+{
+  "features": {
+    "gql": true,
+    "grpc": true,
+    "tls": true,
+    "mcp": true,
+    "ml": true
+  },
+  "uptime": 12345,
+  "version": "0.8.2"
+}
