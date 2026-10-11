@@ -44,6 +44,8 @@ The explorer should be able to show the database schema:
     * REST endpoints for executing queries, introspecting schemas, and fetching per-object summaries.
 * **Target Database**:
     * **Truespar Traverse** (primary target for testing and compatibility).
+* **License**:
+    * **MIT License** for open-source distribution.
 * **Connection Layer Abstraction**:
     * Pluggable database driver interface (e.g. `GraphDatabaseClient` protocol/ABC) to decouple connection and query transport from the rest of the application.
     * **Traverse HTTP Client** (Primary implementation for initial release):
@@ -112,6 +114,7 @@ The implementation should be done as a set of stacked PRs that can go through hu
 
 1. **PR 1: Backend Scaffolding, Database Connection Abstraction & CI Workflow**
    * Backend environment and project initialization with `uv` (`pyproject.toml`, `uv.lock`).
+   * Repository open-source licensing: include **MIT License** (`LICENSE`).
    * FastAPI service setup with configuration (target host, port, API key, database name).
    * Connection layer abstraction (`GraphDatabaseClient` interface).
    * Traverse HTTP client implementation:
@@ -164,6 +167,7 @@ To ensure autonomous execution in Autopilot and Assisted modes without hanging o
 ### 1. Workspace directory structure
 ```
 .
+├── LICENSE                    # MIT License
 ├── .github/
 │   └── workflows/
 │       └── ci.yml             # GitHub Actions running backend and frontend tests
