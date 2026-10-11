@@ -202,6 +202,15 @@ All test, lint, and build commands must run non-interactively with deterministic
   * Tests: `npm --prefix frontend run test:run` (`vitest run`)
   * Visual capture: `npm --prefix frontend run test:screenshot` (Playwright headless script generating images into `.debug-screenshots/`)
 
+> **Assisted Permissions Compliance**:
+> - All dependencies and CLI tools must be explicitly declared in `package.json` (`dependencies` or `devDependencies`) or `pyproject.toml` (`dependencies` or `dev`).
+> - Never execute ad-hoc or undeclared packages via `npx <package>`, `pip install`, or arbitrary global bin commands, as this triggers: *"Agent-selected undeclared package execution via npx requires explicit user authorization."*
+> - Always invoke tools through explicit single commands (one command per execution), avoiding compound chains (`&&`, `||`, `;`), because chained commands cause the auto-approval judge to reject or fail.
+> - Always invoke tools through explicit `npm run <script>` scripts defined in [package.json](/home/jtkornel/Source/robotics/tpg-explorer/frontend/package.json) (e.g. `npm run lint` instead of `npx oxlint`, `npm run build` instead of `npx vite build`), or via `uv run <tool>` declared in `pyproject.toml`.
+> - Never execute interpreter-wrapped scripts or inline multi-line snippets using `python3` or `node` inline without a declared script file or CLI runner command (such as `uv run pytest` or `npm run ...`).
+> - Avoid complex pipeline chains or background shells with interactive process control that trigger manual review prompts. All tasks and test runs must run via declared entry points in `package.json` (`npm run ...`) or `pyproject.toml` (`uv run ...`).
+
+
 ### 3. Concrete API schemas
 * `POST /api/query`:
   * Request: `{"query": string, "dialect": "gql" | "cypher", "database"?: string, "parameters"?: object}`
