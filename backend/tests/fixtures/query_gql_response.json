@@ -1,0 +1,12 @@
+{
+  "columns": ["p.name", "decade"],
+  "rows": [
+    ["Keanu Reeves", 1990],
+    ["Carrie-Anne Moss", 1990],
+    ["Laurence Fishburne", 1990]
+  ],
+  "total_rows": 3,
+  "truncated": false,
+  "query_type": "Read",
+  "time_ms": 1.42
+}
