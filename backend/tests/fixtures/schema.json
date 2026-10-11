@@ -1,0 +1,20 @@
+{
+  "labels": ["Movie", "Person"],
+  "relationship_types": ["ACTED_IN", "DIRECTED", "PRODUCED", "REVIEWED"],
+  "property_keys": {
+    "title": "string",
+    "tagline": "string",
+    "released": "integer",
+    "name": "string",
+    "born": "integer",
+    "roles": "list",
+    "rating": "integer"
+  },
+  "patterns": [
+    { "from_label": "Person", "type": "ACTED_IN", "to_label": "Movie" },
+    { "from_label": "Person", "type": "DIRECTED", "to_label": "Movie" },
+    { "from_label": "Person", "type": "PRODUCED", "to_label": "Movie" }
+  ],
+  "indexes": [],
+  "constraints": []
+}
