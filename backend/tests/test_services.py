@@ -24,7 +24,9 @@ from tpg_explorer.services import (
 class StubGraphClient:
     """Minimal stub implementing GraphDatabaseClient for unit tests."""
 
-    def __init__(self, responses: list[QueryResponse] | None = None, raw_schema: dict | None = None):
+    def __init__(
+        self, responses: list[QueryResponse] | None = None, raw_schema: dict | None = None
+    ):
         self._responses = list(responses or [])
         self._raw_schema = raw_schema or {}
         self.queries: list[dict[str, Any]] = []
@@ -126,12 +128,14 @@ def test_property_value_map_shows_keys():
 
 
 async def test_schema_service_normalizes_dict_property_keys():
-    client = StubGraphClient(raw_schema={
-        "labels": ["Person"],
-        "relationship_types": ["ACTED_IN"],
-        "property_keys": {"name": "string", "born": "integer"},
-        "patterns": [{"from_label": "Person", "type": "ACTED_IN", "to_label": "Movie"}],
-    })
+    client = StubGraphClient(
+        raw_schema={
+            "labels": ["Person"],
+            "relationship_types": ["ACTED_IN"],
+            "property_keys": {"name": "string", "born": "integer"},
+            "patterns": [{"from_label": "Person", "type": "ACTED_IN", "to_label": "Movie"}],
+        }
+    )
     service = SchemaService(client)
     schema = await service.get_schema()
     assert schema.labels == ["Person"]
@@ -141,15 +145,17 @@ async def test_schema_service_normalizes_dict_property_keys():
 
 
 async def test_schema_service_normalizes_list_property_keys():
-    client = StubGraphClient(raw_schema={
-        "labels": [],
-        "relationship_types": [],
-        "property_keys": [
-            {"property": "name", "type": "string"},
-            {"name": "born", "type": "integer"},
-        ],
-        "patterns": [],
-    })
+    client = StubGraphClient(
+        raw_schema={
+            "labels": [],
+            "relationship_types": [],
+            "property_keys": [
+                {"property": "name", "type": "string"},
+                {"name": "born", "type": "integer"},
+            ],
+            "patterns": [],
+        }
+    )
     service = SchemaService(client)
     schema = await service.get_schema()
     assert schema.property_keys == {"name": "string", "born": "integer"}
@@ -170,10 +176,12 @@ async def test_schema_service_handles_empty_schema():
 
 
 async def test_get_node_detail_success():
-    client = StubGraphClient(responses=[
-        QueryResponse(rows=[[{"name": "Keanu", "born": 1964}, ["Person"]]]),
-        QueryResponse(rows=[["outgoing", "ACTED_IN", 5], ["incoming", "DIRECTED", 2]]),
-    ])
+    client = StubGraphClient(
+        responses=[
+            QueryResponse(rows=[[{"name": "Keanu", "born": 1964}, ["Person"]]]),
+            QueryResponse(rows=[["outgoing", "ACTED_IN", 5], ["incoming", "DIRECTED", 2]]),
+        ]
+    )
     service = ObjectQueryService(client)
     result = await service.get_node_detail("4:123")
 
@@ -196,10 +204,12 @@ async def test_get_node_detail_not_found():
 
 async def test_get_node_detail_truncates_long_string():
     long_name = "A" * 500
-    client = StubGraphClient(responses=[
-        QueryResponse(rows=[[{"name": long_name}, ["Person"]]]),
-        QueryResponse(rows=[]),
-    ])
+    client = StubGraphClient(
+        responses=[
+            QueryResponse(rows=[[{"name": long_name}, ["Person"]]]),
+            QueryResponse(rows=[]),
+        ]
+    )
     service = ObjectQueryService(client)
     result = await service.get_node_detail("4:123", max_property_length=50)
 
@@ -211,10 +221,12 @@ async def test_get_node_detail_truncates_long_string():
 
 async def test_get_node_detail_uses_default_max_length():
     long_name = "B" * (DEFAULT_MAX_PROPERTY_LENGTH + 1)
-    client = StubGraphClient(responses=[
-        QueryResponse(rows=[[{"name": long_name}, ["Person"]]]),
-        QueryResponse(rows=[]),
-    ])
+    client = StubGraphClient(
+        responses=[
+            QueryResponse(rows=[[{"name": long_name}, ["Person"]]]),
+            QueryResponse(rows=[]),
+        ]
+    )
     service = ObjectQueryService(client)
     result = await service.get_node_detail("4:123")
     assert result.properties["name"].truncated is True
@@ -222,10 +234,12 @@ async def test_get_node_detail_uses_default_max_length():
 
 async def test_get_node_detail_merged_summary_query():
     """Verify only 2 queries are made (node + merged UNION ALL summary)."""
-    client = StubGraphClient(responses=[
-        QueryResponse(rows=[[{"name": "X"}, ["Person"]]]),
-        QueryResponse(rows=[["outgoing", "KNOWS", 3]]),
-    ])
+    client = StubGraphClient(
+        responses=[
+            QueryResponse(rows=[[{"name": "X"}, ["Person"]]]),
+            QueryResponse(rows=[["outgoing", "KNOWS", 3]]),
+        ]
+    )
     service = ObjectQueryService(client)
     await service.get_node_detail("4:123")
     assert len(client.queries) == 2
@@ -239,15 +253,21 @@ async def test_get_node_detail_merged_summary_query():
 
 
 async def test_get_related_nodes_outgoing():
-    client = StubGraphClient(responses=[
-        QueryResponse(rows=[[1]]),  # count
-        QueryResponse(rows=[[
-            {"roles": ["Neo"]},
-            {"title": "The Matrix"},
-            ["Movie"],
-            "4:456",
-        ]]),
-    ])
+    client = StubGraphClient(
+        responses=[
+            QueryResponse(rows=[[1]]),  # count
+            QueryResponse(
+                rows=[
+                    [
+                        {"roles": ["Neo"]},
+                        {"title": "The Matrix"},
+                        ["Movie"],
+                        "4:456",
+                    ]
+                ]
+            ),
+        ]
+    )
     service = ObjectQueryService(client)
     result = await service.get_related_nodes("4:123", "ACTED_IN", direction="outgoing")
 
@@ -261,10 +281,12 @@ async def test_get_related_nodes_outgoing():
 
 
 async def test_get_related_nodes_incoming():
-    client = StubGraphClient(responses=[
-        QueryResponse(rows=[[0]]),
-        QueryResponse(rows=[]),
-    ])
+    client = StubGraphClient(
+        responses=[
+            QueryResponse(rows=[[0]]),
+            QueryResponse(rows=[]),
+        ]
+    )
     service = ObjectQueryService(client)
     result = await service.get_related_nodes("4:123", "ACTED_IN", direction="incoming")
 
@@ -276,10 +298,12 @@ async def test_get_related_nodes_incoming():
 
 
 async def test_get_related_nodes_pagination_params():
-    client = StubGraphClient(responses=[
-        QueryResponse(rows=[[0]]),
-        QueryResponse(rows=[]),
-    ])
+    client = StubGraphClient(
+        responses=[
+            QueryResponse(rows=[[0]]),
+            QueryResponse(rows=[]),
+        ]
+    )
     service = ObjectQueryService(client)
     await service.get_related_nodes("4:123", "KNOWS", limit=10, offset=20)
 
@@ -290,19 +314,23 @@ async def test_get_related_nodes_pagination_params():
 
 async def test_get_related_nodes_truncates_properties():
     long_title = "T" * 300
-    client = StubGraphClient(responses=[
-        QueryResponse(rows=[[1]]),
-        QueryResponse(rows=[[
-            {},
-            {"title": long_title},
-            ["Movie"],
-            "4:456",
-        ]]),
-    ])
-    service = ObjectQueryService(client)
-    result = await service.get_related_nodes(
-        "4:123", "ACTED_IN", max_property_length=50
+    client = StubGraphClient(
+        responses=[
+            QueryResponse(rows=[[1]]),
+            QueryResponse(
+                rows=[
+                    [
+                        {},
+                        {"title": long_title},
+                        ["Movie"],
+                        "4:456",
+                    ]
+                ]
+            ),
+        ]
     )
+    service = ObjectQueryService(client)
+    result = await service.get_related_nodes("4:123", "ACTED_IN", max_property_length=50)
     pv = result.items[0].node.summary_properties["title"]
     assert pv.truncated is True
     assert pv.original_length == 300
@@ -310,10 +338,12 @@ async def test_get_related_nodes_truncates_properties():
 
 async def test_get_related_nodes_sanitizes_relation_type():
     """Relation types with special characters are sanitized in the query."""
-    client = StubGraphClient(responses=[
-        QueryResponse(rows=[[0]]),
-        QueryResponse(rows=[]),
-    ])
+    client = StubGraphClient(
+        responses=[
+            QueryResponse(rows=[[0]]),
+            QueryResponse(rows=[]),
+        ]
+    )
     service = ObjectQueryService(client)
     await service.get_related_nodes("4:123", "BAD;TYPE")
     query = client.queries[0]["query"]
