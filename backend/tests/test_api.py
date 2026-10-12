@@ -63,34 +63,28 @@ def test_api_schema_endpoint(schema_fixture):
 
 
 def test_api_node_detail_endpoint():
+    # New query shape: [props, labels] (no eid column)
     node_query_response = {
-        "columns": ["n", "labels", "eid"],
+        "columns": ["props", "labels"],
         "rows": [
             [
                 {"name": "Keanu Reeves", "born": 1964},
                 ["Person"],
-                "4:123",
             ]
         ],
         "total_rows": 1,
     }
-    out_rel_response = {
-        "columns": ["rel_type", "cnt"],
-        "rows": [["ACTED_IN", 5]],
+    # Merged UNION ALL query: [direction, rel_type, cnt]
+    summary_response = {
+        "columns": ["direction", "rel_type", "cnt"],
+        "rows": [["outgoing", "ACTED_IN", 5]],
         "total_rows": 1,
-    }
-    in_rel_response = {
-        "columns": ["rel_type", "cnt"],
-        "rows": [],
-        "total_rows": 0,
     }
 
     with respx.mock(base_url="http://mock-traverse:7691") as respx_mock:
-        # Route sequence for the three Cypher queries
         respx_mock.post("/api/query").side_effect = [
             respx.MockResponse(200, json=node_query_response),
-            respx.MockResponse(200, json=out_rel_response),
-            respx.MockResponse(200, json=in_rel_response),
+            respx.MockResponse(200, json=summary_response),
         ]
 
         with TestClient(app) as test_client:
@@ -99,14 +93,17 @@ def test_api_node_detail_endpoint():
             data = response.json()
             assert data["id"] == "4:123"
             assert data["labels"] == ["Person"]
-            assert data["properties"]["name"] == "Keanu Reeves"
+            assert data["properties"]["name"]["value"] == "Keanu Reeves"
+            assert data["properties"]["name"]["type"] == "string"
+            assert data["properties"]["born"]["value"] == 1964
+            assert data["properties"]["born"]["type"] == "integer"
             assert data["relations_summary"]["outgoing"]["ACTED_IN"] == 5
             assert data["relations_summary"]["incoming"] == {}
 
 
 def test_api_node_detail_not_found():
     empty_response = {
-        "columns": ["n", "labels", "eid"],
+        "columns": ["props", "labels"],
         "rows": [],
         "total_rows": 0,
     }
@@ -124,8 +121,9 @@ def test_api_related_nodes_endpoint():
         "rows": [[1]],
         "total_rows": 1,
     }
+    # New query shape: [r_props, m_props, m_labels, m_id]
     related_response = {
-        "columns": ["r_props", "m", "m_labels", "m_id"],
+        "columns": ["r_props", "m_props", "m_labels", "m_id"],
         "rows": [
             [
                 {"roles": ["Neo"]},
@@ -152,7 +150,15 @@ def test_api_related_nodes_endpoint():
             assert data["total"] == 1
             assert len(data["items"]) == 1
             item = data["items"][0]
-            assert item["relation_properties"]["roles"] == ["Neo"]
+            assert item["relation_properties"]["roles"]["type"] == "list"
+            assert item["relation_properties"]["roles"]["original_length"] == 1
             assert item["node"]["id"] == "4:456"
             assert item["node"]["labels"] == ["Movie"]
-            assert item["node"]["summary_properties"]["title"] == "The Matrix"
+            assert item["node"]["summary_properties"]["title"]["value"] == "The Matrix"
+
+
+def test_api_related_nodes_invalid_direction():
+    """Invalid direction values are rejected with 422 (Literal type validation)."""
+    with TestClient(app) as test_client:
+        response = test_client.get("/api/nodes/4:123/relations/ACTED_IN?direction=sideways")
+        assert response.status_code == 422
