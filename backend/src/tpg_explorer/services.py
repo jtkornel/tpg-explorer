@@ -101,9 +101,7 @@ def make_property_value(value: Any, max_length: int) -> PropertyValue:
     return PropertyValue(value=value, type=vtype)
 
 
-def make_property_map(
-    raw: dict[str, Any], max_length: int
-) -> dict[str, PropertyValue]:
+def make_property_map(raw: dict[str, Any], max_length: int) -> dict[str, PropertyValue]:
     """Convert a raw property dict into a PropertyValue map."""
     return {k: make_property_value(v, max_length) for k, v in raw.items()}
 
@@ -230,11 +228,7 @@ class ObjectQueryService:
 
         # --- Count total ---
         count_result = await self.db_client.execute_query(
-            query=(
-                f"MATCH (n) WHERE {NODE_ID_PREDICATE} "
-                f"{match_clause} "
-                "RETURN count(m) AS total"
-            ),
+            query=(f"MATCH (n) WHERE {NODE_ID_PREDICATE} {match_clause} RETURN count(m) AS total"),
             dialect="cypher",
             database=database,
             parameters=params,
@@ -336,7 +330,9 @@ class ObjectQueryService:
                 # Fallback for unexpected shapes
                 r_props = row[0] if len(row) > 0 and isinstance(row[0], dict) else {}
                 m_props = row[1] if len(row) > 1 and isinstance(row[1], dict) else {}
-                m_labels = [str(l) for l in row[2]] if len(row) > 2 and isinstance(row[2], list) else []
+                m_labels = (
+                    [str(l) for l in row[2]] if len(row) > 2 and isinstance(row[2], list) else []
+                )
                 m_id = str(row[3]) if len(row) > 3 and row[3] is not None else "unknown"
 
         return RelatedItem(
