@@ -1,6 +1,19 @@
 # Typed property graph explorer
 
-tpg-explorer will be a web-based tool to explore property graph databases with schemas, to get insights and overview without necessarily writing detailed queries.
+`tpg-explorer` is a web-based tool to explore property graph databases with schemas (specifically Truespar Traverse with GQL and Cypher support), providing insights and overview without necessarily writing detailed queries.
+
+## Project status & PR stack overview
+
+The implementation is structured as a series of 6 stacked pull requests against `jtkornel/tpg-explorer`. All 6 PRs have been implemented and opened:
+
+| PR # | Branch | Base Branch | Status / Focus | Key Deliverables |
+|---|---|---|---|---|
+| **PR 1** (#1) | `feature/pr1-backend-client` | `main` | Open | FastAPI backend scaffolding (`uv`), MIT License, `GraphDatabaseClient` abstraction, `TraverseHttpClient` (GQL/Cypher), `/api/health`, `/api/query`, CI workflow. |
+| **PR 2** (#2) | `feature/pr2-schema-object` | `feature/pr1-backend-client` | Open (Under Review) | Schema introspection and object query services: `SchemaService`, `ObjectQueryService`, `/api/schema`, `/api/nodes/{id}`, `/api/nodes/{id}/relations/{type}` (with direction & pagination). |
+| **PR 3** (#3) | `feature/pr3-frontend-scaffolding` | `feature/pr2-schema-object` | Open | React 19 + TypeScript + Vite frontend scaffolding, `apiClient.ts`, `QueryEditor` (GQL/Cypher selector), `ResultsTable`, Vitest suite, Playwright visual screenshot test runner. |
+| **PR 4** (#4) | `feature/pr4-cytoscape-graph` | `feature/pr3-frontend-scaffolding` | Open | Interactive Cytoscape.js canvas, `graphParser.ts` for tabular query results, layout switcher (`cose`, `circle`, `grid`, `concentric`), zoom/fit/reset controls, node/edge inspector side panel. |
+| **PR 5** (#5) | `feature/pr5-object-detail` | `feature/pr4-cytoscape-graph` | Open | TypeDB Studio-inspired `ObjectDetailView`, node properties, incoming/outgoing relation badges with counts, expandable connected node lists, header `SearchBar`. |
+| **PR 6** (#6) | `feature/pr6-schema-e2e` | `feature/pr5-object-detail` | Open | `SchemaVisualizer` (labels, types, property keys, connection patterns), root `README.md`, end-to-end integration, and complete test verification. |
 
 ### Object detail views
 Many tools can visualize objects and relations as a graph, but this can often result in a cluttered view which is hard to interpret, unless a query has already narrowed down the scope.
@@ -208,10 +221,15 @@ All test, lint, and build commands must run non-interactively with deterministic
   * Response: `{"columns": string[], "rows": any[][], "total_rows": number, "truncated": boolean, "time_ms": number}`
 * `GET /api/schema`:
   * Response: `{"labels": string[], "relationship_types": string[], "property_keys": Record<string, string>, "patterns"?: {"from_label": string, "type": string, "to_label": string}[]}`
-* `GET /api/nodes/{id}`:
-  * Response: `{"id": string, "labels": string[], "properties": Record<string, any>, "relations_summary": {"incoming": Record<string, number>, "outgoing": Record<string, number>}}`
-* `GET /api/nodes/{id}/relations/{type}?direction=incoming|outgoing&limit=50&offset=0`:
-  * Response: `{"relation_type": string, "direction": "incoming" | "outgoing", "items": [{"relation_properties": Record<string, any>, "node": {"id": string, "labels": string[], "summary_properties": Record<string, any>}}], "total": number}`
+* `GET /api/nodes/{id}?max_property_length=200`:
+  * Query params: `max_property_length` (int, 1–10000, default 200) — max characters for string property values before truncation
+  * Response: `{"id": string, "labels": string[], "properties": Record<string, PropertyValue>, "relations_summary": {"incoming": Record<string, number>, "outgoing": Record<string, number>}}`
+  * `PropertyValue`: `{"value": any, "type": "string"|"integer"|"float"|"boolean"|"null"|"list"|"map"|"unknown", "truncated": boolean, "original_length"?: number}`
+    * Strings longer than `max_property_length` are truncated with a `…` suffix; `truncated=true` and `original_length` holds the full character count
+    * Lists/maps are replaced by `{"_type": "list"|"map", "length"?: number, "keys"?: string[]}` descriptors so the frontend knows the shape without receiving huge payloads
+* `GET /api/nodes/{id}/relations/{type}?direction=incoming|outgoing&limit=50&offset=0&max_property_length=200`:
+  * `direction` is strictly validated as `"incoming"` or `"outgoing"` (422 on any other value)
+  * Response: `{"relation_type": string, "direction": "incoming" | "outgoing", "items": [{"relation_properties": Record<string, PropertyValue>, "node": {"id": string, "labels": string[], "summary_properties": Record<string, PropertyValue>}}], "total": number}`
 
 ### 4. Offline mock fixtures
 * Canned responses representing a Traverse sample database (e.g. Movies graph) must be stored in `backend/tests/fixtures/` and `frontend/tests/fixtures/` to enable 100% offline unit tests and visual screenshot runs without requiring a live database instance.
