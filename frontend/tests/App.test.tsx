@@ -26,7 +26,7 @@ describe('App component', () => {
 
     fireEvent.click(screen.getByTestId('tab-graph'));
     expect(screen.getByTestId('tab-graph')).toHaveClass('active');
-    expect(screen.getByTestId('graph-placeholder')).toBeInTheDocument();
+    expect(screen.getByTestId('graph-empty-state')).toBeInTheDocument();
 
     fireEvent.click(screen.getByTestId('tab-schema'));
     expect(screen.getByTestId('tab-schema')).toHaveClass('active');

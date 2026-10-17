@@ -1,11 +1,23 @@
 {
-  "columns": ["p.name", "decade"],
+  "columns": ["m", "r", "p"],
   "rows": [
-    ["Keanu Reeves", 1990],
-    ["Carrie-Anne Moss", 1990],
-    ["Laurence Fishburne", 1990]
+    [
+      { "id": "m1", "labels": ["Movie"], "properties": { "title": "The Matrix", "released": 1999 } },
+      { "id": "r1", "source": "p1", "target": "m1", "type": "ACTED_IN", "properties": { "roles": ["Neo"] } },
+      { "id": "p1", "labels": ["Person"], "properties": { "name": "Keanu Reeves", "born": 1964 } }
+    ],
+    [
+      { "id": "m1", "labels": ["Movie"], "properties": { "title": "The Matrix", "released": 1999 } },
+      { "id": "r2", "source": "p2", "target": "m1", "type": "ACTED_IN", "properties": { "roles": ["Trinity"] } },
+      { "id": "p2", "labels": ["Person"], "properties": { "name": "Carrie-Anne Moss", "born": 1967 } }
+    ],
+    [
+      { "id": "m1", "labels": ["Movie"], "properties": { "title": "The Matrix", "released": 1999 } },
+      { "id": "r3", "source": "p3", "target": "m1", "type": "ACTED_IN", "properties": { "roles": ["Morpheus"] } },
+      { "id": "p3", "labels": ["Person"], "properties": { "name": "Laurence Fishburne", "born": 1961 } }
+    ]
   ],
   "total_rows": 3,
   "truncated": false,
-  "time_ms": 1.42
+  "time_ms": 2.45
 }
