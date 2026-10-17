@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, ArrowRight, Layers, Tag, ExternalLink, RefreshCw, AlertCircle } from 'lucide-react';
 import { apiClient } from '../apiClient';
+import { formatPropertyValue } from '../utils/propertyValue';
 import type { NodeDetail, RelatedNodesResponse } from '../types';
 
 interface ObjectDetailViewProps {
@@ -147,12 +148,10 @@ export const ObjectDetailView: React.FC<ObjectDetailViewProps> = ({
             {Object.keys(nodeDetail.properties).length === 0 ? (
               <span className="text-muted">No properties found.</span>
             ) : (
-              Object.entries(nodeDetail.properties).map(([key, val]) => (
+              Object.entries(nodeDetail.properties).map(([key, pv]) => (
                 <div key={key} className="property-item">
                   <span className="property-key">{key}</span>
-                  <span className="property-value">
-                    {typeof val === 'object' && val !== null ? JSON.stringify(val) : String(val)}
-                  </span>
+                  <span className="property-value">{formatPropertyValue(pv)}</span>
                 </div>
               ))
             )}
@@ -278,7 +277,7 @@ export const ObjectDetailView: React.FC<ObjectDetailViewProps> = ({
                         {Object.entries(item.node.summary_properties || {}).map(([pk, pv]) => (
                           <div key={pk} className="card-prop-item">
                             <span className="card-prop-key">{pk}:</span>
-                            <span className="card-prop-val">{String(pv)}</span>
+                            <span className="card-prop-val">{formatPropertyValue(pv)}</span>
                           </div>
                         ))}
                       </div>
@@ -288,7 +287,9 @@ export const ObjectDetailView: React.FC<ObjectDetailViewProps> = ({
                         <div className="edge-properties-preview">
                           <span className="edge-prop-label">Edge properties:</span>
                           <span className="edge-prop-val">
-                            {JSON.stringify(item.relation_properties)}
+                            {Object.entries(item.relation_properties)
+                              .map(([k, pv]) => `${k}=${formatPropertyValue(pv)}`)
+                              .join(', ')}
                           </span>
                         </div>
                       )}

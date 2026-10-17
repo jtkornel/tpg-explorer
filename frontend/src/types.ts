@@ -20,16 +20,23 @@ export interface SchemaResponse {
   patterns?: { from_label: string; type: string; to_label: string }[];
 }
 
+export interface PropertyValue {
+  value: unknown;
+  type: 'string' | 'integer' | 'float' | 'boolean' | 'null' | 'list' | 'map' | 'unknown';
+  truncated: boolean;
+  original_length?: number;
+}
+
 export interface NodeSummary {
   id: string;
   labels: string[];
-  summary_properties: Record<string, unknown>;
+  summary_properties: Record<string, PropertyValue>;
 }
 
 export interface NodeDetail {
   id: string;
   labels: string[];
-  properties: Record<string, unknown>;
+  properties: Record<string, PropertyValue>;
   relations_summary: {
     incoming: Record<string, number>;
     outgoing: Record<string, number>;
@@ -37,7 +44,7 @@ export interface NodeDetail {
 }
 
 export interface RelationItem {
-  relation_properties: Record<string, unknown>;
+  relation_properties: Record<string, PropertyValue>;
   node: NodeSummary;
 }
 

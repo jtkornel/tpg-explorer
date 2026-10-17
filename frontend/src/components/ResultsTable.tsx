@@ -37,34 +37,35 @@ export const ResultsTable: React.FC<ResultsTableProps> = ({
 
   const { columns, rows, total_rows, truncated, time_ms } = response;
 
-  const renderCellContent = (val: unknown) => {
-    if (val === null || val === undefined) {
-      return <span className="cell-null">null</span>;
+  const renderCellContent = (val: unknown): React.ReactNode => {
+    switch (typeof val) {
+      case 'object':
+        if (val === null) return <span className="cell-null">null</span>;
+        return renderObjectCell(val as Record<string, unknown>);
+      case 'boolean':
+        return <span className="cell-bool">{val ? 'true' : 'false'}</span>;
+      case 'number':
+        return <span className="cell-number">{val}</span>;
+      default:
+        return String(val);
     }
-    if (typeof val === 'boolean') {
-      return <span className="cell-bool">{val ? 'true' : 'false'}</span>;
+  };
+
+  const renderObjectCell = (obj: Record<string, unknown>): React.ReactNode => {
+    if (obj.id && onNodeClick && typeof obj.id === 'string') {
+      const labels = Array.isArray(obj.labels) ? (obj.labels as string[]) : [];
+      return (
+        <button
+          type="button"
+          className="node-link-btn"
+          onClick={() => onNodeClick(String(obj.id))}
+        >
+          {labels.length > 0 ? `(:${labels.join(':')}) ` : ''}
+          {String(obj.id)}
+        </button>
+      );
     }
-    if (typeof val === 'number') {
-      return <span className="cell-number">{val}</span>;
-    }
-    if (typeof val === 'object') {
-      // Check if it's a node representation
-      const obj = val as Record<string, unknown>;
-      if (obj.id && onNodeClick && typeof obj.id === 'string') {
-        return (
-          <button
-            type="button"
-            className="node-link-btn"
-            onClick={() => onNodeClick(String(obj.id))}
-          >
-            {obj.labels ? `(:${(obj.labels as string[]).join(':')}) ` : ''}
-            {String(obj.id)}
-          </button>
-        );
-      }
-      return <code className="cell-json">{JSON.stringify(val)}</code>;
-    }
-    return String(val);
+    return <code className="cell-json">{JSON.stringify(obj)}</code>;
   };
 
   return (
