@@ -19,11 +19,7 @@ export const App: React.FC = () => {
       const resp = await apiClient.runQuery(req);
       setQueryResponse(resp);
     } catch (err: unknown) {
-      if (err instanceof Error) {
-        setError(err.message);
-      } else {
-        setError('An unexpected error occurred executing the query.');
-      }
+      setError(err instanceof Error ? err.message : 'An unexpected error occurred executing the query.');
       setQueryResponse(null);
     } finally {
       setIsLoading(false);
