@@ -43,21 +43,34 @@ class RelationsSummary(BaseModel):
     outgoing: dict[str, int] = Field(default_factory=dict)
 
 
+class PropertyValue(BaseModel):
+    """A property value with truncation metadata.
+
+    The frontend detects truncation via `truncated` and `original_length`.
+    `type` reveals the value category, including container types and lengths.
+    """
+
+    value: Any
+    type: str  # "string" | "integer" | "float" | "boolean" | "null" | "list" | "map" | "unknown"
+    truncated: bool = False
+    original_length: int | None = None  # char count for strings, element count for lists
+
+
 class NodeDetailResponse(BaseModel):
     id: str
     labels: list[str] = Field(default_factory=list)
-    properties: dict[str, Any] = Field(default_factory=dict)
+    properties: dict[str, PropertyValue] = Field(default_factory=dict)
     relations_summary: RelationsSummary = Field(default_factory=RelationsSummary)
 
 
 class RelatedNodeSummary(BaseModel):
     id: str
     labels: list[str] = Field(default_factory=list)
-    summary_properties: dict[str, Any] = Field(default_factory=dict)
+    summary_properties: dict[str, PropertyValue] = Field(default_factory=dict)
 
 
 class RelatedItem(BaseModel):
-    relation_properties: dict[str, Any] = Field(default_factory=dict)
+    relation_properties: dict[str, PropertyValue] = Field(default_factory=dict)
     node: RelatedNodeSummary
 
 

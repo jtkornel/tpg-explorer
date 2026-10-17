@@ -18,17 +18,20 @@ export const QueryEditor: React.FC<QueryEditorProps> = ({
   const [query, setQuery] = useState(defaultQuery);
   const [dialect, setDialect] = useState<'gql' | 'cypher'>(defaultDialect);
 
+  const execute = () => {
+    if (!query.trim() || isLoading) return;
+    onExecute({ query: query.trim(), dialect });
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!query.trim()) return;
-    onExecute({ query: query.trim(), dialect });
+    execute();
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
       e.preventDefault();
-      if (!query.trim() || isLoading) return;
-      onExecute({ query: query.trim(), dialect });
+      execute();
     }
   };
 

@@ -2,6 +2,21 @@ import type { QueryRequest, QueryResponse, SchemaResponse, NodeDetail, RelatedNo
 
 const API_BASE = '/api';
 
+async function parseErrorDetail(response: Response): Promise<unknown> {
+  try {
+    return await response.json();
+  } catch {
+    return await response.text();
+  }
+}
+
+function extractErrorMessage(errDetail: unknown, response: Response): string {
+  if (errDetail && typeof errDetail === 'object' && 'detail' in errDetail) {
+    return String((errDetail as { detail: unknown }).detail);
+  }
+  return `HTTP ${response.status} ${response.statusText}`;
+}
+
 export class ApiError extends Error {
   status: number;
   details?: unknown;
@@ -24,15 +39,8 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
   });
 
   if (!response.ok) {
-    let errDetail: unknown;
-    try {
-      errDetail = await response.json();
-    } catch {
-      errDetail = await response.text();
-    }
-    const message = (errDetail && typeof errDetail === 'object' && 'detail' in errDetail)
-      ? String((errDetail as { detail: unknown }).detail)
-      : `HTTP ${response.status} ${response.statusText}`;
+    const errDetail = await parseErrorDetail(response);
+    const message = extractErrorMessage(errDetail, response);
     throw new ApiError(response.status, message, errDetail);
   }
 
@@ -51,8 +59,9 @@ export const apiClient = {
     return request<SchemaResponse>('/schema');
   },
 
-  async getNode(id: string): Promise<NodeDetail> {
-    return request<NodeDetail>(`/nodes/${encodeURIComponent(id)}`);
+  async getNode(id: string, maxPropertyLength = 200): Promise<NodeDetail> {
+    const params = new URLSearchParams({ max_property_length: maxPropertyLength.toString() });
+    return request<NodeDetail>(`/nodes/${encodeURIComponent(id)}?${params}`);
   },
 
   async getRelatedNodes(
@@ -60,12 +69,14 @@ export const apiClient = {
     relationType: string,
     direction: 'incoming' | 'outgoing' = 'outgoing',
     limit = 50,
-    offset = 0
+    offset = 0,
+    maxPropertyLength = 200
   ): Promise<RelatedNodesResponse> {
     const params = new URLSearchParams({
       direction,
       limit: limit.toString(),
       offset: offset.toString(),
+      max_property_length: maxPropertyLength.toString(),
     });
     return request<RelatedNodesResponse>(`/nodes/${encodeURIComponent(id)}/relations/${encodeURIComponent(relationType)}?${params}`);
   },
