@@ -2,6 +2,11 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { ObjectDetailView } from '../src/components/ObjectDetailView';
 import { apiClient } from '../src/apiClient';
+import type { PropertyValue } from '../src/types';
+
+const str = (value: string): PropertyValue => ({ value, type: 'string', truncated: false });
+const int = (value: number): PropertyValue => ({ value, type: 'integer', truncated: false });
+const list = (value: unknown[]): PropertyValue => ({ value: { length: value.length }, type: 'list', truncated: false });
 
 describe('ObjectDetailView', () => {
   beforeEach(() => {
@@ -13,8 +18,8 @@ describe('ObjectDetailView', () => {
       id: 'movie:101',
       labels: ['Movie'],
       properties: {
-        title: 'The Matrix',
-        released: 1999,
+        title: str('The Matrix'),
+        released: int(1999),
       },
       relations_summary: {
         incoming: { ACTED_IN: 3, DIRECTED: 1 },
@@ -48,7 +53,7 @@ describe('ObjectDetailView', () => {
     vi.spyOn(apiClient, 'getNode').mockResolvedValueOnce({
       id: 'movie:101',
       labels: ['Movie'],
-      properties: { title: 'The Matrix' },
+      properties: { title: str('The Matrix') },
       relations_summary: {
         incoming: { ACTED_IN: 1 },
         outgoing: {},
@@ -60,11 +65,11 @@ describe('ObjectDetailView', () => {
       direction: 'incoming',
       items: [
         {
-          relation_properties: { roles: ['Neo'] },
+          relation_properties: { roles: list(['Neo']) },
           node: {
             id: 'person:201',
             labels: ['Person'],
-            summary_properties: { name: 'Keanu Reeves' },
+            summary_properties: { name: str('Keanu Reeves') },
           },
         },
       ],
