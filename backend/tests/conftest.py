@@ -21,6 +21,12 @@ def query_fixture():
 
 
 @pytest.fixture
+def schema_fixture():
+    with open(FIXTURES_DIR / "schema.json") as f:
+        return json.load(f)
+
+
+@pytest.fixture
 def mock_traverse_client():
     client = TraverseHttpClient(base_url="http://mock-traverse:7691", api_key="tvs_test_key_123")
     return client
