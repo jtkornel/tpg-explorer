@@ -51,8 +51,9 @@ export const apiClient = {
     return request<SchemaResponse>('/schema');
   },
 
-  async getNode(id: string): Promise<NodeDetail> {
-    return request<NodeDetail>(`/nodes/${encodeURIComponent(id)}`);
+  async getNode(id: string, maxPropertyLength = 200): Promise<NodeDetail> {
+    const params = new URLSearchParams({ max_property_length: maxPropertyLength.toString() });
+    return request<NodeDetail>(`/nodes/${encodeURIComponent(id)}?${params}`);
   },
 
   async getRelatedNodes(
@@ -60,12 +61,14 @@ export const apiClient = {
     relationType: string,
     direction: 'incoming' | 'outgoing' = 'outgoing',
     limit = 50,
-    offset = 0
+    offset = 0,
+    maxPropertyLength = 200
   ): Promise<RelatedNodesResponse> {
     const params = new URLSearchParams({
       direction,
       limit: limit.toString(),
       offset: offset.toString(),
+      max_property_length: maxPropertyLength.toString(),
     });
     return request<RelatedNodesResponse>(`/nodes/${encodeURIComponent(id)}/relations/${encodeURIComponent(relationType)}?${params}`);
   },
