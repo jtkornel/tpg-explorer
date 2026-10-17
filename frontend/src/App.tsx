@@ -4,6 +4,7 @@ import { QueryEditor } from './components/QueryEditor';
 import { ResultsTable } from './components/ResultsTable';
 import { CytoscapeGraph } from './components/CytoscapeGraph';
 import { ObjectDetailView } from './components/ObjectDetailView';
+import { SchemaVisualizer } from './components/SchemaVisualizer';
 import { SearchBar } from './components/SearchBar';
 import { extractGraphElements } from './utils/graphParser';
 import { apiClient } from './apiClient';
@@ -152,10 +153,8 @@ export const App: React.FC = () => {
         )}
 
         {activeTab === 'schema' && (
-          <div className="placeholder-view" data-testid="schema-placeholder">
-            <Layers size={48} className="placeholder-icon" />
-            <h3>Schema Visualizer</h3>
-            <p>Database schema and type introspection arriving in PR 6.</p>
+          <div className="schema-tab-layout">
+            <SchemaVisualizer />
           </div>
         )}
       </main>
