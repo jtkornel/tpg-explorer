@@ -231,7 +231,6 @@ class ObjectQueryService:
         params = node_id_params(node_id)
         params.update({"offset": offset, "limit": limit})
 
-        # Build the MATCH clause inline — keep query construction close to usage
         safe_rel_type = _sanitize_rel_type(relation_type)
         rel_pattern = f":`{safe_rel_type}`" if safe_rel_type else ""
         arrow = "<-[r{pat}]-" if direction == "incoming" else "-[r{pat}]->"
