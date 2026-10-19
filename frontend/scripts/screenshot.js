@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { preview } from 'vite';
 import { chromium } from 'playwright';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -11,6 +12,13 @@ const outDir = path.resolve(rootDir, '../.debug-screenshots');
 fs.mkdirSync(outDir, { recursive: true });
 
 async function run() {
+  console.log('Starting preview server...');
+  const server = await preview({
+    root: rootDir,
+    preview: { port: 4173 },
+  });
+  const serverUrl = 'http://localhost:4173';
+
   console.log('Capturing UI screenshots for visual debugging...');
   const browser = await chromium.launch({
     headless: true,
@@ -45,10 +53,8 @@ async function run() {
       });
     });
 
-    // Serve built files or test against preview
-    const previewUrl = process.env.TEST_URL || 'http://localhost:4173';
-    console.log(`Connecting to: ${previewUrl}`);
-    await page.goto(previewUrl, { waitUntil: 'networkidle', timeout: 15000 });
+    console.log(`Connecting to: ${serverUrl}`);
+    await page.goto(serverUrl, { waitUntil: 'networkidle', timeout: 15000 });
 
     // Capture initial query runner view
     await page.screenshot({ path: path.join(outDir, '01_query_runner_initial.png') });
@@ -63,11 +69,11 @@ async function run() {
       console.log('Captured 02_query_runner_results.png');
     }
 
-    // Switch to Graph tab
+    // Switch to Graph tab (now renders CytoscapeGraph since query results contain nodes and edges)
     await page.click('[data-testid="tab-graph"]');
-    await page.waitForSelector('[data-testid="graph-placeholder"]');
-    await page.screenshot({ path: path.join(outDir, '03_graph_tab_placeholder.png') });
-    console.log('Captured 03_graph_tab_placeholder.png');
+    await page.waitForSelector('[data-testid="graph-view-container"]');
+    await page.screenshot({ path: path.join(outDir, '03_graph_tab_cytoscape.png') });
+    console.log('Captured 03_graph_tab_cytoscape.png');
 
     // Switch to Schema tab
     await page.click('[data-testid="tab-schema"]');
@@ -78,6 +84,7 @@ async function run() {
     console.log('Screenshot capture complete!');
   } finally {
     await browser.close();
+    await new Promise((resolve) => server.httpServer.close(resolve));
   }
 }
 
