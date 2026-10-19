@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Database, Table, Share2, Layers } from 'lucide-react';
 import { QueryEditor } from './components/QueryEditor';
 import { ResultsTable } from './components/ResultsTable';
+import { CytoscapeGraph } from './components/CytoscapeGraph';
+import { extractGraphElements } from './utils/graphParser';
 import { apiClient } from './apiClient';
 import type { QueryRequest, QueryResponse } from './types';
 import './App.css';
@@ -11,6 +13,13 @@ export const App: React.FC = () => {
   const [queryResponse, setQueryResponse] = useState<QueryResponse | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const graphElements = useMemo(() => {
+    if (!queryResponse || !queryResponse.rows) {
+      return { nodes: [], edges: [] };
+    }
+    return extractGraphElements(queryResponse.rows);
+  }, [queryResponse]);
 
   const handleExecuteQuery = async (req: QueryRequest) => {
     setIsLoading(true);
@@ -89,10 +98,19 @@ export const App: React.FC = () => {
         )}
 
         {activeTab === 'graph' && (
-          <div className="placeholder-view" data-testid="graph-placeholder">
-            <Share2 size={48} className="placeholder-icon" />
-            <h3>Graph View</h3>
-            <p>Interactive Cytoscape graph visualization arriving in PR 4.</p>
+          <div className="graph-tab-layout">
+            {graphElements.nodes.length === 0 ? (
+              <div className="placeholder-view" data-testid="graph-empty-state">
+                <Share2 size={48} className="placeholder-icon" />
+                <h3>No Graph Elements Found</h3>
+                <p>Run a query returning nodes or relationships in the Query Runner to visualize them here.</p>
+              </div>
+            ) : (
+              <CytoscapeGraph
+                elements={graphElements}
+                onSelectNode={handleNodeClick}
+              />
+            )}
           </div>
         )}
 

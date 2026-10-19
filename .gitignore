@@ -7,5 +7,6 @@ dist/
 build/
 *.egg-info/
 .debug-screenshots/
+test-results/
 node_modules/
 *.tsbuildinfo
