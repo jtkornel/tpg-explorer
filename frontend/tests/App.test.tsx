@@ -22,15 +22,25 @@ describe('App component', () => {
   });
 
   it('switches between tabs', () => {
+    vi.spyOn(apiClient, 'getSchema').mockResolvedValueOnce({
+      labels: [],
+      relationship_types: [],
+      property_keys: {},
+    });
+
     render(<App />);
 
     fireEvent.click(screen.getByTestId('tab-graph'));
     expect(screen.getByTestId('tab-graph')).toHaveClass('active');
     expect(screen.getByTestId('graph-empty-state')).toBeInTheDocument();
 
+    fireEvent.click(screen.getByTestId('tab-object'));
+    expect(screen.getByTestId('tab-object')).toHaveClass('active');
+    expect(screen.getByTestId('object-empty-state')).toBeInTheDocument();
+
     fireEvent.click(screen.getByTestId('tab-schema'));
     expect(screen.getByTestId('tab-schema')).toHaveClass('active');
-    expect(screen.getByTestId('schema-placeholder')).toBeInTheDocument();
+    expect(screen.getByTestId('schema-loading')).toBeInTheDocument();
 
     fireEvent.click(screen.getByTestId('tab-query'));
     expect(screen.getByTestId('tab-query')).toHaveClass('active');
