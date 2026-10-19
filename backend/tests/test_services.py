@@ -170,6 +170,61 @@ async def test_schema_service_handles_empty_schema():
     assert schema.patterns == []
 
 
+async def test_schema_service_normalizes_non_string_keys_and_types():
+    """Property keys and types are coerced to strings during normalization."""
+    client = StubGraphClient(
+        raw_schema={
+            "labels": [],
+            "relationship_types": [],
+            "property_keys": {123: 456, "name": None, True: "boolean"},
+            "patterns": [],
+        }
+    )
+    service = SchemaService(client)
+    schema = await service.get_schema()
+    assert schema.property_keys == {"123": "456", "name": "None", "True": "boolean"}
+
+
+async def test_schema_service_normalizes_list_with_mixed_items():
+    """List-form property_keys handles both 'property' and 'name' key styles,
+    plus non-dict items and dicts with unexpected shapes."""
+    client = StubGraphClient(
+        raw_schema={
+            "labels": [],
+            "relationship_types": [],
+            "property_keys": [
+                {"property": "title", "type": "string"},
+                {"name": "born", "type": "integer"},
+                "orphan_key",
+                {"unexpected": "shape"},
+            ],
+            "patterns": [],
+        }
+    )
+    service = SchemaService(client)
+    schema = await service.get_schema()
+    assert schema.property_keys["title"] == "string"
+    assert schema.property_keys["born"] == "integer"
+    assert schema.property_keys["orphan_key"] == "any"
+    # Dicts without 'property'/'name' keys fall through to the catch-all
+    assert schema.property_keys["{'unexpected': 'shape'}"] == "any"
+
+
+async def test_schema_service_normalizes_non_dict_non_list_property_keys():
+    """Non-dict, non-list property_keys (e.g. a string) yields an empty mapping."""
+    client = StubGraphClient(
+        raw_schema={
+            "labels": [],
+            "relationship_types": [],
+            "property_keys": "unexpected",
+            "patterns": [],
+        }
+    )
+    service = SchemaService(client)
+    schema = await service.get_schema()
+    assert schema.property_keys == {}
+
+
 # ---------------------------------------------------------------------------
 # ObjectQueryService — get_node_detail
 # ---------------------------------------------------------------------------

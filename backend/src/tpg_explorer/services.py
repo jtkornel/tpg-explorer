@@ -242,6 +242,7 @@ class ObjectQueryService:
                 total = 0
 
         # --- Fetch page ---
+        # Row shape: [r_props: dict, m_props: dict, m_labels: list, m_id: str | None]
         page_result = await self.db_client.execute_query(
             query=(
                 f"MATCH (n) WHERE {NODE_ID_PREDICATE} "
@@ -255,7 +256,33 @@ class ObjectQueryService:
             parameters=params,
         )
 
-        items = [self._parse_related_row(row, max_property_length) for row in page_result.rows]
+        items: list[RelatedItem] = []
+        for row in page_result.rows:
+            match row:
+                case [dict() as r_props, dict() as m_props, list() as m_labels, str() as m_id]:
+                    pass
+                case [dict() as r_props, dict() as m_props, list() as m_labels, None]:
+                    m_id = "unknown"
+                case _:
+                    r_props = row[0] if len(row) > 0 and isinstance(row[0], dict) else {}
+                    m_props = row[1] if len(row) > 1 and isinstance(row[1], dict) else {}
+                    m_labels = (
+                        [str(l) for l in row[2]]
+                        if len(row) > 2 and isinstance(row[2], list)
+                        else []
+                    )
+                    m_id = str(row[3]) if len(row) > 3 and row[3] is not None else "unknown"
+
+            items.append(
+                RelatedItem(
+                    relation_properties=make_property_map(r_props, max_property_length),
+                    node=RelatedNodeSummary(
+                        id=m_id,
+                        labels=[str(l) for l in m_labels],
+                        summary_properties=make_property_map(m_props, max_property_length),
+                    ),
+                )
+            )
 
         return RelatedNodesResponse(
             relation_type=relation_type,
@@ -316,32 +343,3 @@ class ObjectQueryService:
         rel_pattern = f":`{safe_rel_type}`" if safe_rel_type else ""
         arrow = "<-[r{pat}]-" if direction == "incoming" else "-[r{pat}]->"
         return f"MATCH (n){arrow.format(pat=rel_pattern)}(m)"
-
-    @staticmethod
-    def _parse_related_row(row: list[Any], max_property_length: int) -> RelatedItem:
-        """Parse a related-nodes query row into a RelatedItem.
-
-        Expected row shape: [r_props: dict, m_props: dict, m_labels: list, m_id: str]
-        """
-        match row:
-            case [dict() as r_props, dict() as m_props, list() as m_labels, str() as m_id]:
-                pass
-            case [dict() as r_props, dict() as m_props, list() as m_labels, None]:
-                m_id = "unknown"
-            case _:
-                # Fallback for unexpected shapes
-                r_props = row[0] if len(row) > 0 and isinstance(row[0], dict) else {}
-                m_props = row[1] if len(row) > 1 and isinstance(row[1], dict) else {}
-                m_labels = (
-                    [str(l) for l in row[2]] if len(row) > 2 and isinstance(row[2], list) else []
-                )
-                m_id = str(row[3]) if len(row) > 3 and row[3] is not None else "unknown"
-
-        return RelatedItem(
-            relation_properties=make_property_map(r_props, max_property_length),
-            node=RelatedNodeSummary(
-                id=m_id,
-                labels=[str(l) for l in m_labels],
-                summary_properties=make_property_map(m_props, max_property_length),
-            ),
-        )
