@@ -42,6 +42,11 @@ def node_id_params(node_id: str) -> dict[str, Any]:
     return {"id": node_id, "int_id": int_id}
 
 
+def _sanitize_rel_type(relation_type: str) -> str:
+    """Strip characters that are unsafe in a Cypher relationship type label."""
+    return "".join(c for c in relation_type if c.isalnum() or c == "_")
+
+
 # ---------------------------------------------------------------------------
 # Property value protocol
 # ---------------------------------------------------------------------------
@@ -226,7 +231,11 @@ class ObjectQueryService:
         params = node_id_params(node_id)
         params.update({"offset": offset, "limit": limit})
 
-        match_clause = self._build_match_clause(relation_type, direction)
+        # Build the MATCH clause inline — keep query construction close to usage
+        safe_rel_type = _sanitize_rel_type(relation_type)
+        rel_pattern = f":`{safe_rel_type}`" if safe_rel_type else ""
+        arrow = "<-[r{pat}]-" if direction == "incoming" else "-[r{pat}]->"
+        match_clause = f"MATCH (n){arrow.format(pat=rel_pattern)}(m)"
 
         # --- Count total ---
         count_result = await self.db_client.execute_query(
@@ -335,11 +344,3 @@ class ObjectQueryService:
                     else:
                         incoming[rel_type] = count
         return RelationsSummary(incoming=incoming, outgoing=outgoing)
-
-    @staticmethod
-    def _build_match_clause(relation_type: str, direction: Direction) -> str:
-        """Build the MATCH clause for related nodes, sanitising the rel type."""
-        safe_rel_type = "".join(c for c in relation_type if c.isalnum() or c == "_")
-        rel_pattern = f":`{safe_rel_type}`" if safe_rel_type else ""
-        arrow = "<-[r{pat}]-" if direction == "incoming" else "-[r{pat}]->"
-        return f"MATCH (n){arrow.format(pat=rel_pattern)}(m)"
