@@ -127,7 +127,8 @@ def test_property_value_map_shows_keys():
 # ---------------------------------------------------------------------------
 
 
-async def test_schema_service_normalizes_dict_property_keys():
+async def test_schema_service_parses_dict_property_keys():
+    """Dict-form property_keys {name: type} is passed through."""
     client = StubGraphClient(
         raw_schema={
             "labels": ["Person"],
@@ -144,7 +145,8 @@ async def test_schema_service_normalizes_dict_property_keys():
     assert schema.patterns[0].from_label == "Person"
 
 
-async def test_schema_service_normalizes_list_property_keys():
+async def test_schema_service_parses_list_property_keys():
+    """List-form property_keys handles both 'property' and 'name' key styles."""
     client = StubGraphClient(
         raw_schema={
             "labels": [],
@@ -170,8 +172,8 @@ async def test_schema_service_handles_empty_schema():
     assert schema.patterns == []
 
 
-async def test_schema_service_normalizes_non_string_keys_and_types():
-    """Property keys and types are coerced to strings during normalization."""
+async def test_schema_service_coerces_non_string_keys_and_types():
+    """Normalization: non-string keys and types are coerced to strings."""
     client = StubGraphClient(
         raw_schema={
             "labels": [],
@@ -185,9 +187,9 @@ async def test_schema_service_normalizes_non_string_keys_and_types():
     assert schema.property_keys == {"123": "456", "name": "None", "True": "boolean"}
 
 
-async def test_schema_service_normalizes_list_with_mixed_items():
-    """List-form property_keys handles both 'property' and 'name' key styles,
-    plus non-dict items and dicts with unexpected shapes."""
+async def test_schema_service_handles_list_with_mixed_items():
+    """List-form property_keys: non-dict items and unexpected dict shapes
+    fall through to the catch-all."""
     client = StubGraphClient(
         raw_schema={
             "labels": [],
@@ -210,7 +212,7 @@ async def test_schema_service_normalizes_list_with_mixed_items():
     assert schema.property_keys["{'unexpected': 'shape'}"] == "any"
 
 
-async def test_schema_service_normalizes_non_dict_non_list_property_keys():
+async def test_schema_service_handles_non_dict_non_list_property_keys():
     """Non-dict, non-list property_keys (e.g. a string) yields an empty mapping."""
     client = StubGraphClient(
         raw_schema={
