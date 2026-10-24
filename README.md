@@ -41,6 +41,36 @@ Inspired by TypeDB Studio and Neo4j Browser, TPG Explorer combines:
 
 ## Quickstart
 
+### Interactive Launch (One-Command)
+To launch the complete environment (Traverse graph database server, FastAPI backend, and Vite frontend) against any `.tvdb` file:
+
+```bash
+./launch_explorer.sh /path/to/database.tvdb
+```
+
+Or try it immediately with a self-contained **demo graph** (auto-created and seeded at `.demo/demo.tvdb`):
+
+```bash
+./launch_explorer.sh --demo
+```
+
+If you already have a running Traverse server instance, launch only the backend and frontend:
+
+```bash
+TRAVERSE_URL=http://localhost:7691 API_KEY=your_api_key ./launch_explorer.sh --external-db
+```
+
+When ready, open [http://localhost:5173](http://localhost:5173). Press `Ctrl+C` in the terminal to gracefully stop all services.
+
+You can override binary paths, ports, or database settings with CLI flags (`./launch_explorer.sh --help`) or environment variables:
+```bash
+TRAVERSE_BIN=/path/to/traverse-server HTTP_PORT=7691 BACKEND_PORT=8000 FRONTEND_PORT=5173 ./launch_explorer.sh /path/to/database.tvdb
+```
+
+---
+
+### Manual Step-by-Step Setup
+
 ### Prerequisites
 - **Python**: 3.11+ and [uv](https://github.com/astral-sh/uv)
 - **Node.js**: 20+ and npm
@@ -54,9 +84,9 @@ uv run uvicorn tpg_explorer.main:app --reload --port 8000
 ```
 
 Backend environment variables:
-- `TRAVERSE_URL`: URL of the Traverse HTTP endpoint (default: `http://localhost:8080`)
-- `TRAVERSE_DATABASE`: Target database name (default: `traverse`)
-- `TRAVERSE_TOKEN`: Bearer token for authenticated Traverse instances
+- `TPG_TRAVERSE_URL`: URL of the Traverse HTTP endpoint (default: `http://localhost:7691`)
+- `TPG_DEFAULT_DATABASE`: Target database name (default: `default` or `traverse`)
+- `TPG_TRAVERSE_API_KEY`: API key for Traverse HTTP API (e.g. `tvs_...`)
 
 ### Frontend Setup
 ```bash
