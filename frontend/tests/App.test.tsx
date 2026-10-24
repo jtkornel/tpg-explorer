@@ -47,6 +47,28 @@ describe('App component', () => {
     expect(screen.getByTestId('query-editor')).toBeInTheDocument();
   });
 
+  it('persists edited query and dialect across tab navigation', () => {
+    render(<App />);
+
+    const input = screen.getByTestId('query-input');
+    fireEvent.change(input, { target: { value: 'MATCH (a)-[r]->(b) RETURN a,r,b LIMIT 10' } });
+
+    const cypherBtn = screen.getByTestId('dialect-cypher');
+    fireEvent.click(cypherBtn);
+
+    // Switch away from query view
+    fireEvent.click(screen.getByTestId('tab-graph'));
+    expect(screen.getByTestId('tab-graph')).toHaveClass('active');
+
+    // Switch back to query view
+    fireEvent.click(screen.getByTestId('tab-query'));
+    expect(screen.getByTestId('tab-query')).toHaveClass('active');
+
+    // Verify query text and dialect were preserved
+    expect(screen.getByTestId('query-input')).toHaveValue('MATCH (a)-[r]->(b) RETURN a,r,b LIMIT 10');
+    expect(screen.getByTestId('dialect-cypher')).toHaveClass('active');
+  });
+
   it('executes query and displays results table', async () => {
     vi.spyOn(apiClient, 'runQuery').mockResolvedValueOnce({
       columns: ['title', 'year'],

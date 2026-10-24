@@ -5,6 +5,10 @@ import type { QueryRequest } from '../types';
 interface QueryEditorProps {
   onExecute: (req: QueryRequest) => void;
   isLoading: boolean;
+  query?: string;
+  onQueryChange?: (query: string) => void;
+  dialect?: 'gql' | 'cypher';
+  onDialectChange?: (dialect: 'gql' | 'cypher') => void;
   defaultQuery?: string;
   defaultDialect?: 'gql' | 'cypher';
 }
@@ -12,11 +16,34 @@ interface QueryEditorProps {
 export const QueryEditor: React.FC<QueryEditorProps> = ({
   onExecute,
   isLoading,
+  query: controlledQuery,
+  onQueryChange,
+  dialect: controlledDialect,
+  onDialectChange,
   defaultQuery = 'MATCH (n) RETURN n LIMIT 25',
   defaultDialect = 'gql',
 }) => {
-  const [query, setQuery] = useState(defaultQuery);
-  const [dialect, setDialect] = useState<'gql' | 'cypher'>(defaultDialect);
+  const [internalQuery, setInternalQuery] = useState(defaultQuery);
+  const [internalDialect, setInternalDialect] = useState<'gql' | 'cypher'>(defaultDialect);
+
+  const query = controlledQuery !== undefined ? controlledQuery : internalQuery;
+  const dialect = controlledDialect !== undefined ? controlledDialect : internalDialect;
+
+  const setQueryValue = (val: string) => {
+    if (onQueryChange) {
+      onQueryChange(val);
+    } else {
+      setInternalQuery(val);
+    }
+  };
+
+  const setDialectValue = (val: 'gql' | 'cypher') => {
+    if (onDialectChange) {
+      onDialectChange(val);
+    } else {
+      setInternalDialect(val);
+    }
+  };
 
   const execute = () => {
     if (!query.trim() || isLoading) return;
@@ -43,7 +70,7 @@ export const QueryEditor: React.FC<QueryEditorProps> = ({
           <button
             type="button"
             className={`dialect-btn ${dialect === 'gql' ? 'active' : ''}`}
-            onClick={() => setDialect('gql')}
+            onClick={() => setDialectValue('gql')}
             data-testid="dialect-gql"
           >
             GQL
@@ -51,7 +78,7 @@ export const QueryEditor: React.FC<QueryEditorProps> = ({
           <button
             type="button"
             className={`dialect-btn ${dialect === 'cypher' ? 'active' : ''}`}
-            onClick={() => setDialect('cypher')}
+            onClick={() => setDialectValue('cypher')}
             data-testid="dialect-cypher"
           >
             Cypher
@@ -85,7 +112,7 @@ export const QueryEditor: React.FC<QueryEditorProps> = ({
         <textarea
           className="query-textarea"
           value={query}
-          onChange={(e) => setQuery(e.target.value)}
+          onChange={(e) => setQueryValue(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder="Enter your query here (e.g. MATCH (n:Movie) RETURN n.title LIMIT 25)"
           rows={5}
