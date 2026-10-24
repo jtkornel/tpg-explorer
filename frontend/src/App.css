@@ -782,7 +782,9 @@ body {
   font-size: 0.875rem;
   color: var(--text-primary);
   font-family: var(--font-mono);
-  word-break: break-all;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  white-space: pre-wrap;
 }
 
 /* Relationship badges */
@@ -912,20 +914,26 @@ body {
   flex-direction: column;
   gap: 4px;
   font-size: 0.8125rem;
+  overflow: hidden;
 }
 
 .card-prop-item {
   display: flex;
   gap: 6px;
+  min-width: 0;
 }
 
 .card-prop-key {
   color: var(--text-muted);
+  flex-shrink: 0;
 }
 
 .card-prop-val {
   color: var(--text-primary);
   font-family: var(--font-mono);
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  min-width: 0;
 }
 
 .edge-properties-preview {
@@ -937,6 +945,9 @@ body {
   display: flex;
   flex-direction: column;
   gap: 2px;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  min-width: 0;
 }
 
 .object-detail-panel {

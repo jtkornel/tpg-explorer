@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, ArrowRight, Layers, Tag, ExternalLink, RefreshCw, AlertCircle } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Layers, Tag, ExternalLink, RefreshCw, AlertCircle, GitCommit } from 'lucide-react';
 import { apiClient } from '../apiClient';
-import { formatPropertyValue } from '../utils/propertyValue';
+import { formatPropertyValue, sortPropertyEntries } from '../utils/propertyValue';
 import type { NodeDetail, RelatedNodesResponse } from '../types';
 
 interface ObjectDetailViewProps {
@@ -148,7 +148,7 @@ export const ObjectDetailView: React.FC<ObjectDetailViewProps> = ({
             {Object.keys(nodeDetail.properties).length === 0 ? (
               <span className="text-muted">No properties found.</span>
             ) : (
-              Object.entries(nodeDetail.properties).map(([key, pv]) => (
+              sortPropertyEntries(Object.entries(nodeDetail.properties)).map(([key, pv]) => (
                 <div key={key} className="property-item">
                   <span className="property-key">{key}</span>
                   <span className="property-value">{formatPropertyValue(pv)}</span>
@@ -160,7 +160,10 @@ export const ObjectDetailView: React.FC<ObjectDetailViewProps> = ({
 
         {/* Relation Badges Section */}
         <section className="detail-section">
-          <h3>Relationships</h3>
+          <h3>
+            <GitCommit size={16} />
+            Relationships
+          </h3>
 
           <div className="relations-summary-block">
             <div className="summary-group">
@@ -274,7 +277,7 @@ export const ObjectDetailView: React.FC<ObjectDetailViewProps> = ({
 
                       {/* Summary properties */}
                       <div className="card-properties">
-                        {Object.entries(item.node.summary_properties || {}).map(([pk, pv]) => (
+                        {sortPropertyEntries(Object.entries(item.node.summary_properties || {})).map(([pk, pv]) => (
                           <div key={pk} className="card-prop-item">
                             <span className="card-prop-key">{pk}:</span>
                             <span className="card-prop-val">{formatPropertyValue(pv)}</span>
