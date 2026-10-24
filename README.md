@@ -129,8 +129,6 @@ The frontend Vite development server runs on `http://localhost:5173` with proxy 
 - Property key types.
 - Observed connection patterns between graph node labels (if reported by the server).
 
-![Schema Visualizer](./media/schema-view.png)
-
 ---
 
 ## Testing & Quality Assurance
