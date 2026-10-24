@@ -18,9 +18,13 @@ type SelectedItem =
 function toCyElements(elements: GraphElements) {
   return [
     ...elements.nodes.map((n) => ({ data: { id: n.id, label: n.label, raw: n } })),
-    ...elements.edges.map((e) => ({
-      data: { id: e.id, source: e.source, target: e.target, label: e.type, raw: e },
-    })),
+    ...elements.edges.map((e) => {
+      const rawName = e.properties.name ?? e.properties.title;
+      const edgeLabel = rawName ? `${e.type} (${String(rawName)})` : e.type;
+      return {
+        data: { id: e.id, source: e.source, target: e.target, label: edgeLabel, raw: e },
+      };
+    }),
   ];
 }
 
@@ -28,19 +32,24 @@ const CY_STYLE: cytoscape.StylesheetJson = [
   {
     selector: 'node',
     style: {
-      'background-color': '#38bdf8',
+      'background-color': '#0284c7',
       'label': 'data(label)',
       'color': '#f8fafc',
-      'font-size': '12px',
-      'font-family': 'JetBrains Mono, monospace',
+      'font-size': '10px',
+      'font-weight': 'bold',
+      'font-family': 'Inter, system-ui, -apple-system, sans-serif',
       'text-valign': 'center',
       'text-halign': 'center',
       'text-wrap': 'wrap',
-      'text-max-width': '80px',
-      'width': '50px',
-      'height': '50px',
+      'text-max-width': '76px',
+      'width': '84px',
+      'height': '84px',
+      'padding': '6px',
       'border-width': 2,
-      'border-color': '#0284c7',
+      'border-color': '#38bdf8',
+      'text-outline-color': '#0f172a',
+      'text-outline-width': 2,
+      'text-outline-opacity': 0.9,
     },
   },
   {
@@ -48,7 +57,7 @@ const CY_STYLE: cytoscape.StylesheetJson = [
     style: {
       'background-color': '#f59e0b',
       'border-color': '#d97706',
-      'border-width': 4,
+      'border-width': 3,
     },
   },
   {
@@ -61,10 +70,16 @@ const CY_STYLE: cytoscape.StylesheetJson = [
       'curve-style': 'bezier',
       'label': 'data(label)',
       'font-size': '10px',
-      'color': '#94a3b8',
-      'text-background-opacity': 0.8,
+      'font-weight': 'bold',
+      'font-family': 'Inter, system-ui, -apple-system, sans-serif',
+      'color': '#cbd5e1',
+      'text-background-opacity': 0.9,
       'text-background-color': '#0f172a',
-      'text-background-padding': '2px',
+      'text-background-padding': '3px',
+      'text-background-shape': 'roundrectangle',
+      'text-border-opacity': 0.6,
+      'text-border-width': 1,
+      'text-border-color': '#334155',
     },
   },
   {
@@ -79,7 +94,8 @@ const CY_STYLE: cytoscape.StylesheetJson = [
 
 function InspectorContent({ item, onSelectNode }: { item: SelectedItem; onSelectNode?: (id: string) => void }) {
   switch (item.type) {
-    case 'node':
+    case 'node': {
+      const targetId = (item.data.properties.id as string | undefined) ?? item.data.id;
       return (
         <>
           <div className="inspector-field">
@@ -95,7 +111,7 @@ function InspectorContent({ item, onSelectNode }: { item: SelectedItem; onSelect
             <button
               type="button"
               className="inspect-node-btn"
-              onClick={() => onSelectNode(item.data.id)}
+              onClick={() => onSelectNode(targetId)}
               data-testid="inspect-node-btn"
             >
               Inspect Node Details &rarr;
@@ -103,6 +119,7 @@ function InspectorContent({ item, onSelectNode }: { item: SelectedItem; onSelect
           )}
         </>
       );
+    }
     case 'edge':
       return (
         <>
@@ -138,8 +155,15 @@ export const CytoscapeGraph: React.FC<CytoscapeGraphProps> = ({
       layout: { name: layoutName, animate: false },
     });
 
+    // Tap node selects it in the inspector; double tap navigates directly to object view
     cy.on('tap', 'node', (evt) => {
-      setSelectedItem({ type: 'node', data: evt.target.data('raw') as GraphNode });
+      const node = evt.target.data('raw') as GraphNode;
+      setSelectedItem({ type: 'node', data: node });
+    });
+    cy.on('dbltap', 'node', (evt) => {
+      const node = evt.target.data('raw') as GraphNode;
+      const targetId = (node.properties?.id as string | undefined) ?? node.id;
+      if (onSelectNode) onSelectNode(targetId);
     });
     cy.on('tap', 'edge', (evt) => {
       setSelectedItem({ type: 'edge', data: evt.target.data('raw') as GraphEdge });
@@ -148,12 +172,28 @@ export const CytoscapeGraph: React.FC<CytoscapeGraphProps> = ({
       if (evt.target === cy) setSelectedItem(null);
     });
 
+    // Ensure Cytoscape recalculates dimensions and centers graph after DOM layout
+    const rafId = requestAnimationFrame(() => {
+      cy.resize();
+      cy.fit(undefined, 30);
+    });
+
+    let resizeObserver: ResizeObserver | null = null;
+    if (typeof ResizeObserver !== 'undefined' && containerRef.current) {
+      resizeObserver = new ResizeObserver(() => {
+        cy.resize();
+      });
+      resizeObserver.observe(containerRef.current);
+    }
+
     cyRef.current = cy;
     return () => {
+      cancelAnimationFrame(rafId);
+      if (resizeObserver) resizeObserver.disconnect();
       cy.destroy();
       cyRef.current = null;
     };
-  }, [elements, layoutName]);
+  }, [elements, layoutName, onSelectNode]);
 
   const zoom = (factor: number) => {
     const cy = cyRef.current;
@@ -170,7 +210,7 @@ export const CytoscapeGraph: React.FC<CytoscapeGraphProps> = ({
 
   const inspectorTitle = selectedItem
     ? selectedItem.type === 'node'
-      ? `Node: ${selectedItem.data.id}`
+      ? `Node: ${(selectedItem.data.properties.name as string | undefined) ?? (selectedItem.data.properties.id as string | undefined) ?? selectedItem.data.id}`
       : `Edge: ${(selectedItem.data as GraphEdge).type}`
     : null;
 
@@ -213,7 +253,6 @@ export const CytoscapeGraph: React.FC<CytoscapeGraphProps> = ({
           ref={containerRef}
           className="cytoscape-canvas"
           data-testid="cytoscape-canvas"
-          style={{ width: '100%', height: '560px' }}
         />
 
         {selectedItem && inspectorTitle && (

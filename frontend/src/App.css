@@ -512,6 +512,7 @@ body {
 .cytoscape-canvas {
   flex: 1;
   height: 100%;
+  text-align: left;
 }
 
 .graph-inspector-panel {
