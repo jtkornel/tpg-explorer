@@ -113,6 +113,8 @@ The frontend Vite development server runs on `http://localhost:5173` with proxy 
 - Dynamic layout selection: `cose`, `breadthfirst`, `circle`, `concentric`, and `grid`.
 - Direct canvas interactions: node selection panel, zooming, panning, and fit to viewport.
 
+![Interactive Cytoscape Graph View](./media/graph-view.png)
+
 ### 3. Object Detail View & Search
 - TypeDB Studio-inspired navigation.
 - Node ID, label pills, and formatted property inspector.
@@ -120,10 +122,14 @@ The frontend Vite development server runs on `http://localhost:5173` with proxy 
 - Expanding relationship types dynamically fetches connected nodes with summary properties.
 - Header search bar for direct node lookup.
 
+![Object Detail View](./media/object-detail-view.png)
+
 ### 4. Schema Visualizer
 - Node labels and relationship types catalog.
 - Property key types.
 - Observed connection patterns between graph node labels (if reported by the server).
+
+![Schema Visualizer](./media/schema-view.png)
 
 ---
 
