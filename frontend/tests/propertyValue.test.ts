@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { formatPropertyValue, unwrapPropertyValue } from '../src/utils/propertyValue';
+import { formatPropertyValue, unwrapPropertyValue, sortPropertyEntries } from '../src/utils/propertyValue';
 import type { PropertyValue } from '../src/types';
 
 describe('formatPropertyValue', () => {
@@ -68,5 +68,41 @@ describe('unwrapPropertyValue', () => {
   it('returns null for null values', () => {
     const pv: PropertyValue = { value: null, type: 'null', truncated: false };
     expect(unwrapPropertyValue(pv)).toBeNull();
+  });
+});
+
+describe('sortPropertyEntries', () => {
+  it('places id first, followed by name, other properties, and timestamps last', () => {
+    const entries: [string, PropertyValue][] = [
+      ['updated_at', { value: '2026-08-14T19:36:55.060000', type: 'string', truncated: false }],
+      ['code_hash', { value: 'sha256:abc', type: 'string', truncated: false }],
+      ['name', { value: 'Empirical Model', type: 'string', truncated: false }],
+      ['created_at', { value: '2026-08-14T19:35:04.143000', type: 'string', truncated: false }],
+      ['id', { value: 'mod-1', type: 'string', truncated: false }],
+      ['summary', { value: 'A summary', type: 'string', truncated: false }],
+      ['status', { value: 'active', type: 'string', truncated: false }],
+    ];
+
+    const sortedKeys = sortPropertyEntries(entries).map(([k]) => k);
+    expect(sortedKeys).toEqual([
+      'id',
+      'name',
+      'summary',
+      'status',
+      'code_hash',
+      'created_at',
+      'updated_at',
+    ]);
+  });
+
+  it('detects ISO date string values as temporal even if key does not end in _at', () => {
+    const entries: [string, PropertyValue][] = [
+      ['snapshot', { value: '2026-10-24T10:00:00Z', type: 'string', truncated: false }],
+      ['description', { value: 'Description', type: 'string', truncated: false }],
+      ['title', { value: 'Main Title', type: 'string', truncated: false }],
+    ];
+
+    const sortedKeys = sortPropertyEntries(entries).map(([k]) => k);
+    expect(sortedKeys).toEqual(['title', 'description', 'snapshot']);
   });
 });
