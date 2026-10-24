@@ -6,7 +6,7 @@ Inspired by TypeDB Studio and Neo4j Browser, TPG Explorer combines:
 - An interactive **Query Runner** supporting both GQL and Cypher.
 - An interactive **Cytoscape.js Graph View** with automatic element extraction, layout algorithms, zooming, and pan controls.
 - A TypeDB Studio-style **Object Detail View** with incoming/outgoing relationship summary badges, live counts, and connected node expansion.
-- A **Schema Visualizer** mapping node labels, relationship types, cataloged properties, and connection patterns.
+- A **Schema Visualizer** mapping node labels, relationship types, cataloged properties, and connection patterns (when provided by the server).
 - Fast, non-interactive local development and automated CI testing using `uv` and `npm`.
 
 ---
@@ -107,7 +107,6 @@ The frontend Vite development server runs on `http://localhost:5173` with proxy 
 ### 1. Query Runner
 - Switch between **GQL** and **Cypher** dialects.
 - Format and tabularize complex results including nested maps, lists, and primitives.
-- Direct click-to-inspect links on node identifiers.
 
 ### 2. Interactive Cytoscape Graph View
 - Automatically parses graph nodes and edges from query rows.
@@ -124,7 +123,7 @@ The frontend Vite development server runs on `http://localhost:5173` with proxy 
 ### 4. Schema Visualizer
 - Node labels and relationship types catalog.
 - Property key types.
-- Observed connection patterns between graph node labels.
+- Observed connection patterns between graph node labels (if reported by the server).
 
 ---
 
