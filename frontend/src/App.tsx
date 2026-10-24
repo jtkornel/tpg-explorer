@@ -15,6 +15,8 @@ export const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'query' | 'graph' | 'schema' | 'object'>('query');
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [queryResponse, setQueryResponse] = useState<QueryResponse | null>(null);
+  const [currentQuery, setCurrentQuery] = useState('MATCH (n) RETURN n LIMIT 25');
+  const [currentDialect, setCurrentDialect] = useState<'gql' | 'cypher'>('gql');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -102,6 +104,10 @@ export const App: React.FC = () => {
           <div className="query-view-layout">
             <section className="editor-section">
               <QueryEditor
+                query={currentQuery}
+                onQueryChange={setCurrentQuery}
+                dialect={currentDialect}
+                onDialectChange={setCurrentDialect}
                 onExecute={handleExecuteQuery}
                 isLoading={isLoading}
               />
