@@ -20,6 +20,7 @@ class TraverseHttpClient(GraphDatabaseClient):
             "Accept": "application/json",
         }
         if self.api_key:
+            headers["X-API-Key"] = self.api_key
             headers["Authorization"] = f"Bearer {self.api_key}"
 
         self._client = httpx.AsyncClient(

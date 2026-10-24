@@ -23,14 +23,15 @@ from tpg_explorer.models import (
 # ---------------------------------------------------------------------------
 # Node identity matching
 # ---------------------------------------------------------------------------
-# Traverse/Neo4j exposes node identity in three forms depending on the
-# database version and query dialect:
+# Traverse/Neo4j exposes node identity in several forms depending on the
+# database version, query dialect, and dataset conventions:
 #   1. elementId(n)    — canonical Neo4j 5.x+ element ID, e.g. "4:abc123:0"
 #   2. id(n)           — legacy internal numeric ID (integer)
 #   3. toString(id(n)) — the numeric ID rendered as a string
-# We match against all three so the API accepts any ID format the caller
-# has, regardless of which form the underlying database produced.
-NODE_ID_PREDICATE = "elementId(n) = $id OR toString(id(n)) = $id OR id(n) = $int_id"
+#   4. n.id            — domain property ID stored on the node (e.g. "alg-local-linear-fit")
+# We match against all flavours so the API accepts any ID format the caller
+# has, regardless of which form the underlying database or dataset produced.
+NODE_ID_PREDICATE = "elementId(n) = $id OR toString(id(n)) = $id OR id(n) = $int_id OR n.id = $id"
 
 
 def node_id_params(node_id: str) -> dict[str, Any]:
