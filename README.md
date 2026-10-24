@@ -110,7 +110,7 @@ The frontend Vite development server runs on `http://localhost:5173` with proxy 
 
 ### 2. Interactive Cytoscape Graph View
 - Automatically parses graph nodes and edges from query rows.
-- Dynamic layout selection: `cose`, `breadthfirst`, `circle`, `concentric`, and `grid`.
+- Dynamic layout selection: `cose`, `circle`, `concentric`, and `grid`.
 - Direct canvas interactions: node selection panel, zooming, panning, and fit to viewport.
 
 ![Interactive Cytoscape Graph View](./media/graph-view.png)
