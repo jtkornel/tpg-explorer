@@ -19,15 +19,15 @@ export interface GraphElements {
 }
 
 interface RawEdge {
-  id?: string;
-  source: string;
-  target: string;
+  id?: string | number;
+  source: string | number;
+  target: string | number;
   type: string;
   properties?: Record<string, unknown>;
 }
 
 interface RawNode {
-  id: string;
+  id: string | number;
   labels?: string[];
   properties?: Record<string, unknown>;
 }
@@ -38,11 +38,18 @@ function classifyCell(val: unknown): CellKind {
   if (!val || typeof val !== 'object') return { kind: 'skip' };
   const obj = val as Record<string, unknown>;
 
-  if (typeof obj.source === 'string' && typeof obj.target === 'string' && typeof obj.type === 'string') {
+  if (
+    (typeof obj.source === 'string' || typeof obj.source === 'number') &&
+    (typeof obj.target === 'string' || typeof obj.target === 'number') &&
+    typeof obj.type === 'string'
+  ) {
     return { kind: 'edge', data: obj as unknown as RawEdge };
   }
 
-  if (typeof obj.id === 'string' && (Array.isArray(obj.labels) || 'properties' in obj)) {
+  if (
+    (typeof obj.id === 'string' || typeof obj.id === 'number') &&
+    (Array.isArray(obj.labels) || 'properties' in obj || obj._type === 'node')
+  ) {
     return { kind: 'node', data: obj as unknown as RawNode };
   }
 
@@ -54,31 +61,57 @@ function makePlaceholderNode(id: string): GraphNode {
 }
 
 function makeGraphNode(raw: RawNode): GraphNode {
+  const idStr = String(raw.id);
   const labels = Array.isArray(raw.labels) ? raw.labels : [];
   const properties = raw.properties && typeof raw.properties === 'object' ? raw.properties : {};
-  const labelText = labels.length > 0 ? `:${labels.join(':')}` : raw.id;
-  return { id: raw.id, label: labelText, labels, properties };
+
+  // Find most descriptive name: explicit name/title, or reference/label/id
+  const rawName =
+    properties.name ??
+    properties.title ??
+    (properties.kind === 'entity' ? properties.ref : undefined) ??
+    properties.ref ??
+    (properties.label && properties.label !== '' ? properties.label : undefined);
+  const nameStr = rawName != null ? String(rawName).trim() : '';
+
+  let labelText: string;
+  if (nameStr && labels.length > 0) {
+    labelText = `${nameStr}\n(:${labels.join(':')})`;
+  } else if (nameStr) {
+    labelText = nameStr;
+  } else if (labels.length > 0) {
+    labelText = `:${labels.join(':')}`;
+  } else {
+    labelText = idStr;
+  }
+
+  return { id: idStr, label: labelText, labels, properties };
 }
 
 function makeGraphEdge(raw: RawEdge): GraphEdge {
+  const sourceStr = String(raw.source);
+  const targetStr = String(raw.target);
+  const edgeId = raw.id != null ? String(raw.id) : `${sourceStr}->${raw.type}->${targetStr}`;
+  const properties = raw.properties && typeof raw.properties === 'object' ? raw.properties : {};
   return {
-    id: raw.id || `${raw.source}->${raw.type}->${raw.target}`,
-    source: raw.source,
-    target: raw.target,
+    id: edgeId,
+    source: sourceStr,
+    target: targetStr,
     type: raw.type,
-    properties: raw.properties && typeof raw.properties === 'object' ? raw.properties : {},
+    properties,
   };
 }
 
 function upsertNode(nodeMap: Map<string, GraphNode>, raw: RawNode): void {
-  const existing = nodeMap.get(raw.id);
+  const idStr = String(raw.id);
+  const existing = nodeMap.get(idStr);
   if (!existing) {
-    nodeMap.set(raw.id, makeGraphNode(raw));
+    nodeMap.set(idStr, makeGraphNode(raw));
     return;
   }
   const labels = Array.isArray(raw.labels) ? raw.labels : [];
   if (existing.labels.length === 0 && labels.length > 0) {
-    nodeMap.set(raw.id, {
+    nodeMap.set(idStr, {
       ...makeGraphNode(raw),
       properties: { ...existing.properties, ...(raw.properties ?? {}) },
     });
@@ -101,11 +134,13 @@ export function extractGraphElements(rows: unknown[][]): GraphElements {
           if (!edgeMap.has(edge.id)) {
             edgeMap.set(edge.id, edge);
           }
-          if (!nodeMap.has(classified.data.source)) {
-            nodeMap.set(classified.data.source, makePlaceholderNode(classified.data.source));
+          const src = String(classified.data.source);
+          const tgt = String(classified.data.target);
+          if (!nodeMap.has(src)) {
+            nodeMap.set(src, makePlaceholderNode(src));
           }
-          if (!nodeMap.has(classified.data.target)) {
-            nodeMap.set(classified.data.target, makePlaceholderNode(classified.data.target));
+          if (!nodeMap.has(tgt)) {
+            nodeMap.set(tgt, makePlaceholderNode(tgt));
           }
           break;
         }
